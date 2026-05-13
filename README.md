@@ -90,9 +90,25 @@ INSERT INTO transactions (account_number, txn_date, amount, type) VALUES
 
 ---
 
+## Prerequisites
+
+Make sure the following are installed and configured on your machine before running the project.
+
+| Requirement | Version | Notes |
+|---|---|---|
+| Java JDK | 11 or higher | Set `JAVA_HOME` environment variable |
+| Apache Tomcat | 10.x or higher | Must support Jakarta EE (`jakarta.servlet.*`) |
+| MySQL Server | 8.x | Running on `localhost:3306` |
+| MySQL Connector/J | 8.x | JDBC driver JAR for the project |
+| IDE (optional) | Eclipse / IntelliJ IDEA | Eclipse IDE for Enterprise Java Developers recommended |
+
+> ⚠️ Tomcat 9 and below use the `javax.servlet.*` namespace. This project uses `jakarta.servlet.*`, so **Tomcat 10+** is required.
+
+---
+
 ## Configuration
 
-The JDBC connection is hardcoded in `LoginServlet.java` and `TransactionHistory.jsp`. Update the credentials to match your environment:
+The JDBC connection is hardcoded in `LoginServlet.java` and `TransactionHistory.jsp`. Update the credentials to match your environment before deploying:
 
 ```java
 String jdbcURL = "jdbc:mysql://localhost:3306/project?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC";
@@ -105,11 +121,78 @@ Connection con = DriverManager.getConnection(jdbcURL, "root", "hello");
 
 ## How to Run
 
-1. **Set up the database** using the SQL scripts above.
-2. **Deploy to Apache Tomcat** — place the project folder in Tomcat's `webapps/` directory.
-3. **Add the MySQL JDBC driver** JAR (`mysql-connector-j-*.jar`) to `WEB-INF/lib/`.
-4. **Start Tomcat** and open `http://localhost:8080/<project-name>/Login.jsp` in a browser.
-5. **Log in** with a valid account number and password from the `accounts` table.
+### Step 1 — Set up the database
+
+1. Start your MySQL server.
+2. Open MySQL Workbench, DBeaver, or the MySQL CLI.
+3. Run the following to create the database:
+   ```sql
+   CREATE DATABASE project;
+   USE project;
+   ```
+4. Paste and execute the table creation and sample data SQL from the [Database Setup](#database-setup) section above.
+
+### Step 2 — Configure the project
+
+1. Open `LoginServlet.java` and `TransactionHistory.jsp`.
+2. Update the JDBC URL, username, and password to match your local MySQL setup.
+3. Place the `mysql-connector-j-*.jar` file inside `WEB-INF/lib/`. Download it from [MySQL Downloads](https://dev.mysql.com/downloads/connector/j/) if you don't have it.
+
+### Step 3 — Deploy to Tomcat
+
+**Option A — Using an IDE (Eclipse)**
+
+1. Open Eclipse and go to **File → Import → Existing Projects into Workspace**.
+2. Select the project folder and click **Finish**.
+3. Right-click the project → **Run As → Run on Server**.
+4. Select your Tomcat 10+ server instance and click **Finish**.
+
+**Option B — Manual deployment**
+
+1. Build the project into a `.war` file (via your IDE or `javac` + manual packaging).
+2. Copy the `.war` file (or the project folder) into Tomcat's `webapps/` directory.
+3. Start Tomcat:
+   ```bash
+   # Linux / macOS
+   $CATALINA_HOME/bin/startup.sh
+
+   # Windows
+   %CATALINA_HOME%\bin\startup.bat
+   ```
+
+### Step 4 — Open in browser
+
+Navigate to:
+```
+http://localhost:8080/BankEase/Login.jsp
+```
+Replace `BankEase` with the actual deployed folder/WAR name if different.
+
+---
+
+## Usage
+
+### 1. Landing Page
+Open the app URL in your browser. You will see the **Premier Capital Bank** welcome screen with a **Login** button.
+
+### 2. Logging In
+Click **Login** to go to the login form. Enter:
+- **Account Number** — the integer account number (e.g., `100001`)
+- **Password** — the account password (e.g., `pass123`)
+
+Click **Submit**. If the credentials are incorrect, the login page reloads with an error message: `Invalid Account or Password`.
+
+### 3. Account Balance Dashboard
+On successful login, you are redirected to the **Balance** page, which shows:
+- Your name and account number
+- Your current balance in ₹
+- A colour-coded status message indicating whether your balance is healthy, near the minimum, or below the minimum
+
+### 4. Transaction History
+Click the **View Transactions** button on the balance page to see a full table of your past transactions, including transaction ID, date, amount, and type (Credit/Debit).
+
+### 5. Session Protection
+All pages after login are session-protected. If you try to access `Balance.jsp` or `TransactionHistory.jsp` directly without logging in, you will be automatically redirected to the login form.
 
 ---
 
